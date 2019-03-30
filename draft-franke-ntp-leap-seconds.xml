@@ -1,0 +1,496 @@
+<?xml version='1.0'?>
+<?rfc toc="yes" comments="yes"?>
+<!DOCTYPE rfc SYSTEM 'rfc2629.dtd'>
+<rfc docName="draft-franke-ntp-leap-seconds-00"
+     category="std"
+     updates="5905"
+     xml:lang="en">
+  <front>
+    <title abbrev="Leap Seconds and Era Numbers in NTP">
+      Leap Seconds and Era Numbers in the Network Time Protocol
+    </title>
+    <author fullname="Daniel Fox Franke" initials="D" surname="Franke">
+      <organization abbrev="Akamai">Akamai Technologies, Inc.</organization>
+      <address>
+        <postal>
+          <street>150 Broadway</street>
+          <city>Cambridge</city>
+          <region>MA</region>
+          <code>02142</code>
+          <country>United States</country>
+        </postal>
+        <email>dafranke@akamai.com</email>
+        <uri>https://www.dfranke.us</uri>
+      </address>
+    </author>
+    <date/>
+    <abstract>
+      <t>
+        The memo clarifies the correct behavior of NTP implementations
+        in proximity to leap seconds, and introduces a new extension
+        field for disambiguating timestamps in the potential presence
+        of leap seconds and for communicating the TAI-UTC offset and
+        the NTP era number.
+      </t>
+    </abstract>
+  </front>
+  <middle>
+    <section title="Background">
+      <section title="Leap seconds">
+        <t>
+          Modern timekeeping is based upon two distinct notions of time:
+          universal time and atomic time. A universal time scale is based
+          upon observation of the rotation of the Earth relative to some
+          celestial reference point such as the Sun or distant background
+          stars. An atomic time scale is based upon measurement of a quantum
+          phenomenon that are understood to be cleanly periodic with respect
+          to theoretical physics' idealized notion of proper time.
+        </t>
+        <t>
+          The most commonly-used universal time scale is UT1, which is
+          based on &quot;the mean solar time of the prime meridian
+          obtained from direct astronomical observation... corrected for
+          the effects of small movements of the Earth relative to the
+          axis of rotation&quot;<xref target="ITU.T4.1996"/>. The most
+          commonly-used atomic time scale is Temps Atomique
+          International (International Atomic Time, or TAI), which is
+          based upon the SI second. The SI second is presently defined
+          as &quot;the duration of 9,192,631,770 periods of the
+          radiation corresponding to the transition between the two
+          hyperfine levels of the ground state of the caesium-133
+          atom&quot;, but may in the future be redefined as time
+          metrologists gain the ability to measure other quantum
+          phenomena to ever-greater precision.
+        </t>
+        <t>
+          Civil timekeeping is based upon UTC, which is a compromise
+          between UT1 and TAI and is neither purely universal nor purely
+          atomic. Seconds in UTC are SI seconds, but days are not always
+          86,400 seconds long: from time to time a &quot;leap&quot;
+          second is inserted or deleted at the end of a day, always
+          either June 30 or December 31. The decision to insert or
+          delete a leap second is made by the International Earth
+          Rotation and Reference Systems Service (IERS), with the aim of
+          ensuring that UTC and UT1 never differ by more than 900
+          milliseconds.  At their inception in 1972, UTC and TAI were
+          equal. Since then, through the start of 2019, 37 leap seconds
+          have been inserted and none have been deleted, placing TAI 37
+          seconds ahead of UTC. Except while a leap second is in
+          progress, TAI and UTC always differ by an integral number of
+          seconds.
+        </t>
+        <t>
+          Both TAI and UTC are canonically represented by a count of
+          days, hours, minutes, and seconds (including fractional
+          seconds) since their epoch at solar midnight at the prime
+          meridian on January 1, 1958. While neither TAI nor UTC is
+          formally defined for any date earlier than the epoch, this nit
+          is routinely ignored by allowing the day number to be negative
+          and by assuming the fiction that prior to 1958 Earth's
+          rotation was always perfectly regular with respect to proper
+          time.
+        </t>
+        <t>
+          Since one day of TAI always contains 24 hours, one hour always
+          contains 60 minutes, and one minute always contains 60
+          seconds, one can safely dispense with this structure and,
+          without any loss of information, equivalently represent TAI
+          just as a real number of seconds since the epoch. Similarly,
+          any alternative date can safely be chosen as an epoch so long
+          as it is fixed and known.
+        </t>
+        <t>
+          UTC, however, cannot be simplified to the same extent. While
+          the hours, minutes, and seconds can safely be consolidated
+          into &quot;seconds since midnight&quot;, since not all days
+          are of equal length, day number must be tracked separately
+          from time of day.
+        </t>
+        <t>
+          Text-based timestamp formats such as <xref target="ISO.8601.1988">ISO 8601</xref>
+          can represent UTC faithfully. At the start of the leap second
+          which was inserted on December 31, 2016, the time in ISO 8601
+          format was 2016-12-31T23:59:60Z. One second later it became
+          2017-01-01T00:00:00Z. However, many timestamp formats commonly
+          used in binary protocols and operating system APIs, while
+          nominally intended to represent UTC, cannot faithfully
+          represent UTC time in the possible presence of leap seconds
+          and are in fact their own distinct time scale. Two such timestamp
+          formats in wide use are NTP time<xref target="RFC5905"/> and
+          POSIX time.
+        </t>
+        <t>
+          Both NTP and POSIX use timestamps consisting of a single
+          number, intended to be converted to a UTC day number and
+          seconds-since-midnight by computing an integer quotient and
+          remainder (respectively) with a divisor of 86,400; day zero in
+          POSIX is January 1, 1970 while in NTP it is January 1,
+          1900. Since this function already maps element of its domain
+          to a point in ordinary time, the time during a leap second
+          must therefore either be unrepresentable or be represented
+          ambiguously. POSIX embraces the ambiguity by giving an
+          inserted leap second the same representation as the second
+          which follows it. 2016-12-31T23:59:60Z and
+          2017-01-01T00:00:00Z are both represented by the POSIX
+          timestamp 1483228800. Leap second representation in NTP
+          was, until this memo, left unspecified, but historical
+          practice has been to apply the same rule as POSIX for the
+          simple reason that NTP implementations typically rely on
+          POSIX APIs to obtain the system time.
+        </t>
+        <t>
+          Some NTP implementations circumvent the issue of
+          representing leap seconds through the practice of &quot;leap
+          smearing&quot;, which entails the use of a modified time
+          scale in which, when in proximity to a UTC leap second,
+          seconds on the modified scale have a length different from
+          that of an SI second, so that its days continue to align
+          with UTC days and each day consistently has 86,400 (modified)
+          seconds in it. Leap smearing can be a simple and practical
+          approach on closed networks when clock errors of a second or
+          less are acceptable; however, it violates <xref
+          target="RFC5905"/> by incompatibly altering the semantics of
+          timestamps, and therefore its use on public networks harms
+          interoperability. See <xref target="I-D.ietf-ntp-bcp"/>
+          for further discussion of the merits and drawbacks of leap
+          smearing.
+        </t>
+        <t>
+          This memo blesses the POSIX-like semantics for determining
+          timestamp values during leap seconds. It introduces an
+          extension field which adds flags corresponding to each
+          timestamp in the packet header, which when set indicate that
+          the corresponding timestamp was captured during a leap
+          second. This allows for unambiguous and unsmeared time
+          representation in the possible presence of a leap second.
+        </t>
+      </section>
+      <section title="The Leap Indicator field">
+        <t>
+          NTP packets include a Leap Indicator field which warns
+          receivers of an upcoming insertion or deletion of a leap
+          second. <xref target="RFC5905"/> specifies that this field
+          warns &quot;of an impending leap second to be inserted or
+          deleted in the last minute of the current
+          month&quot;. However, servers typically set the leap
+          indicator only during the final day of the month and many
+          clients have ossified around this expectation. As a result,
+          servers cannot warn clients of a leap second more than 24 hours
+          in advance without triggering widespread misbehavior.
+        </t>
+        <t>
+          This memo recommends that servers continue to avoid setting
+          the leap indicator more than 24 hours in advance, while the
+          extension field introduced herein includes a separate leap
+          indicator intended to be set further in advance. This memo
+          also clarifies how the leap indicators are to be set in
+          packets constructed during a leap event.
+        </t>
+      </section>
+      <section title="Era numbers">
+        <t>
+          NTP timestamps can actually represent any of an infinite
+          family of times, all spaced a multiple of 2**32 non-leap
+          seconds (just over 136 years) apart. The timestamp 0, for
+          example, may represent 1900-01-01T00:00:00Z or may represent
+          2036-02-07T07:28:16Z. (This contrasts with POSIX in which
+          times outside the range of the time_t type are considered
+          unrepresentable, leading to the well-known 2038 epochalypse
+          date for 32-bit systems). <xref target="RFC5905"/> defines
+          the notion of an &quot;era number&quot;, wherein
+          1900-01-01T00:00:00Z begins era 0, 2036-02-07T07:28:16Z
+          begins era 1, and so forth. However, implementations which
+          do not use the extension described in this memo are
+          responsible for inferring era numbers on their own, as they
+          do not appear anywhere in an unextended NTP packet.
+        </t>
+        <t>
+          While RFC 5905 does not describe how era numbers are to be
+          inferred, any practical approach must rely on the fact that
+          all timestamps appearing in an NTP packet header represent
+          either the present or the very recent past. This fact makes
+          it possible to maintain a sliding window to determine how
+          timestamps are to be interpreted, such that once an
+          implementation knows that the current era is at least `e'
+          and that if the era is `e' then the current time within that
+          era is at least `t', then any timestamp significantly less
+          than `t' is to be interpreted as belonging to era `e+1'.  A
+          common, simple method for implementations to record
+          appropriate (e,t) tuples is for their compilation scripts to
+          encode compilation time into their output. The resulting
+          binary will then make reasonable inferences for the next 136
+          years, which one hopes will allow it to outlive any hardware
+          which will run it.
+        </t>
+        <t>
+          Stored-program computers do not yet have 136 years of
+          history behind them, but they do have enough to demonstrate
+          a copious number of examples of software living at least
+          several decades longer than its original programmers ever
+          envisioned. For an NTP binary to remain in use 136 years
+          after it is compiled is not entirely inconceivable. A more
+          immediate concern is that automatic inclusion of compilation
+          time into binaries runs at cross purposes with efforts to
+          ensure byte-for-byte reproducability of build results.
+        </t>
+        <t>
+          Many NTP implementations do not implement an era window of any
+          kind; they unconditionally assume that they are in era 0. Such
+          implementations will stop working in 2036.
+        </t>
+        <t>
+          The extension field introduced in this memo adds an explicit
+          era number to allow for simpler and less error-prone
+          handling of era rollover.
+        </t>
+      </section>
+    </section>
+    <section title="Requirements Language">
+      <t>
+        The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+        "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+        "OPTIONAL" in this document are to be interpreted as described in
+        BCP&nbsp;14 <xref target="RFC2119" /> <xref target="RFC8174" /> when,
+        and only when, they appear in all capitals, as shown here.
+      </t>
+    </section>
+    <section title="The Leap Data and Era Number extension field">
+      <t>
+      The Leap Data and Era Number extension field SHALL be formatted as shown in
+      <xref target="ef-format"/>.
+    </t>
+      <figure anchor="ef-format" title="Leap Data and Era Number extension field format">
+        <artwork><![CDATA[
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|          Field Type           |            Length             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|ELI|F|R|X| res |                   Era Number                  | 
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                         TAI-UTC Offset                        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+.                             Padding                           .
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+]]>
+        </artwork>
+      </figure>
+      <t>
+        The fields are defined as follows:
+        <list>
+          <t>Field Type: MUST be set to [[TBD]].</t>
+          <t>Length: The length of the extension field as specified by
+          <xref target="RFC7822"/>.</t>
+          <t>ELI: The Extended Leap Indicator, as specified below.</t>
+          <t>F: When set, indicates that the Reference Timestamp was
+          captured during a leap second.</t>
+          <t>R: When set, indicates that the Receive Timestamp was
+          captured during a leap second.</t>
+          <t>X: When set, indicates that the Transmit Timestamp was
+          captured during a leap second</t>
+          <t>res: These three bits are unused and reserved. Senders
+          MUST set them to 0. Receivers MUST igonre them.</t>
+          <t>Era Number: The era, as defined in <xref
+          target="RFC5905"/>, during which the Receive Timestamp was
+          captured, given as an unsigned 24-bit integer in network
+          byte order.</t>
+          <t>TAI-UTC Offset: The value DTAI as defined in <xref
+          target="ITU.T4.1996"/>, expressed as a 32-bit signed
+          two's-complement integer in network byte order, as of the
+          time reflected by the Receive Timestamp. If the Receive
+          Timestamp is captured during a leap second, the given
+          TAI-UTC SHALL be as of just prior to the beginning of that
+          leap second.</t>
+          <t>Padding: As much padding as is necessary to cause the
+          extension field to have the minimum length required by <xref
+          target="RFC7822"/>. If the extension field is encrypted
+          using <xref
+          target="I-D.ietf-ntp-using-nts-for-ntp">NTS</xref> then it
+          does not need to contain any padding. Senders MUST set
+          padding to zero and receivers MUST ignore it.</t>
+        </list>
+      </t>
+      <t>
+        Values for the Extended Leap Indicator SHALL be constructed
+        and interpreted as follows:
+        <list>
+          <t>00: No leap second will be inserted or deleted at the end
+          of the current six-month period.</t>
+          <t>01: A leap second will be inserted at the end of the
+          current six-month period.</t>
+          <t>10: A second will be deleted at the end of the current
+          six-month period.</t>
+          <t>11: No data is yet available as to whether a leap second
+          will be inserted or deleted at the end of the current
+          six-month period.</t>
+        </list>
+        The current six-month period is the period which contains the
+        Receive Timestamp and runs either from January 1 to June 30 or
+        from July 1 to December 31 of the same Gregorian calendar year.
+      </t>
+      <t>
+        The semantics of the Extended Leap Indicator roughly mirror
+        those of the Leap Indicator header field. In contrast,
+        however, leap warnings MAY be provided up to six months
+        advance, as soon as the relevant bulletin becomes available
+        from the IERS. Furthermore, a value of 11 merely indicates
+        that no bulletin is available yet; it does not indicate, as
+        the header's Leap Indicator field does, that the sender's
+        clock is unsynchronized.
+      </t>
+      <t>
+        The Leap Data and Era Number extension field MAY be included
+        in symmetric, client, server, or broadcast mode, but, to
+        prevent amplification, servers MUST NOT include it in their
+        response if the client did not include it in its request. In
+        client-mode packets, all subfields except for Field Type and
+        Length SHOULD be set to zero to satisfy <xref
+        target="I-D.ietf-ntp-data-minimization">data
+        minimization</xref> goals, and servers MUST ignore all such
+        subfields in client-mode packets. When <xref
+        target="I-D.ietf-ntp-using-nts-for-ntp">Network
+        Time Security</xref> is in use, the Leap Data and Era Number
+        extension field SHOULD be encrypted and MUST be authenticated,
+        and if the client encrypted the field in its request then the
+        server MUST encrypt it in its response.
+      </t>
+      <t>
+        The Era Number subfield gives the era number of the Receive
+        Timestamp.  The Reference Timestamp always precedes the
+        Receive Timestamp, and the Transmit Timestamp always succeeds
+        the Receive Timestamp. Therefore, if the Reference Timestamp
+        is strictly greater than the Receive Timestamp, its era number
+        is one less than the Receive Timestamp's era; otherwise its
+        era is the same as the Receive Timestamp's era. If the
+        Transmit Timestamp is strictly less than the Receive
+        Timestamp, its era is one greater than the Receive Timestamp's
+        era; otherwise its era is the same as the Receive Timestamp's
+        era.
+      </t>
+      <t>
+        No flag is provided to indicate whether the Origin Timestamp
+        was captured during a leap second, and no mechanism is
+        specified for determining its era.  Such information would not
+        be meaningful. In broadcast-mode packets and in client-mode
+        packets that implement <xref
+        target="I-D.ietf-ntp-data-minimization">data
+        minimization</xref>, the Origin Timestamp is zero; in all
+        other modes, it is copied without interpretation from a
+        previous packet's Transmit Timestamp (which in turn, from
+        data-minimizing clients, is just a random value).  The Origin
+        Timestamp is therefore often not a timestamp at all, and even
+        when it is a timestamp it is not useful to interpret it as
+        such.
+      </t>
+      <t>
+        The 24-bit Era Number has a range of approximately 2.28
+        billion years. Regardless of the fate of humanity, life on
+        Earth, or NTP over this period, tidal forces and solar winds
+        will have sufficiently altered Earth's orbit that UTC will
+        have ceased to be a meaningful time scale.
+      </t>
+    </section>
+    <section title="Clarifications to RFC 5905">
+      <t>
+        A leap warning in the Leap Indicator header field of an NTP
+        packet indicates that a leap second will be inserted or
+        deleted at the end of the current Gregorian calendar month,
+        where the current month is the one indicated by the Receive
+        Timestamp. Receivers MUST NOT apply a leap second except at
+        the end of a month. However, to accomodate broken receivers,
+        senders SHOULD NOT send a leap warning in the Leap Indicator
+        header field except during the final day of a month.
+      </t>
+      <t>
+        The Leap Indicator SHALL be set to 01 while a inserted leap
+        second is in progress, and then cleared only after the leap second
+        has ended.
+      </t>
+      <t>
+        Timestamps captured during an inserted leap second SHALL have the
+        same value that they will have one second later, during the first
+        second of the following month. Equivalently stated, the clock SHALL
+        continue to advance normally during an inserted leap second and then
+        jump backward by one second after the leap second ends.
+      </t>
+      <t>
+        When a deleted leap second or any portion of an inserted leap
+        second intervenes between when the Receive Timestamp is
+        captured and when the Transmit Timestamp is captured, the
+        result is likely to be misinterpreted by any receiver which
+        does not implement the Leap Data and Era Number extension
+        field.  To prevent this situation, senders SHOULD NOT emit
+        packets, other than client-mode packets, that were constructed
+        with a leap event intervening, unless both the emitted packet
+        and the packet to which it is being emitted in response contain
+        a Leap Data and Era Number extension. Senders should instead
+        let it appear to the receiver that the emitted packet was
+        dropped by the network.
+      </t>
+    </section>
+    <section title="Security Considerations">
+      <t>
+        All extensions to NTP must take care that they do not enable
+        clients to cause servers to emit responses larger than the
+        client's request, which would create the potential for DDoS
+        amplification. This memo imposes two requirements relevant to
+        this constraint. First, that servers MUST NOT emit a Leap Data
+        and Era Number extension field except in response to a client
+        request that contains one. Second, that if the client encrypts
+        the extension field, then the server must also do so. The
+        significance of this second requirement is that encrypted
+        extension fields per <xref
+        target="I-D.ietf-ntp-using-nts-for-ntp"/> have more
+        relaxed padding requirements than unencrypted extension fields
+        per <xref target="RFC7822"/>, and therefore may be smaller.
+      </t>
+    </section>
+    <section title="IANA Considerations">
+      <t>
+          IANA is requested to allocate the following entry in the
+          <xref target="RFC5905">NTP Extension Field Types registry</xref>:
+      </t>
+      <texttable>
+        <ttcol>Field Type</ttcol>
+        <ttcol>Meaning</ttcol>
+        <ttcol>Reference</ttcol>
+        
+        <c>[[TBD]]</c>
+        <c>Leap Data and Era Number</c>
+        <c>[[this memo]]</c>
+      </texttable>
+  </section>
+  </middle>
+  <back>
+    <references title="Normative References">
+      <?rfc include='reference.RFC.2119.xml'?>
+      <?rfc include='reference.RFC.5905.xml'?>
+      <?rfc include='reference.RFC.7822.xml'?>
+      <?rfc include='reference.RFC.8174.xml'?>
+      <?rfc include='reference.I-D.draft-ietf-ntp-using-nts-for-ntp-17.xml'?>
+      <reference anchor="ITU.T4.1996">
+        <front>
+          <title>
+            Standard-frequency and time-signal emissions 
+          </title>
+          <author>
+            <organization>International Telecommunications Union</organization>
+          </author>
+          <date month="" year="1996"/>
+        </front>
+        <seriesInfo name="ITU-R" value="Recommendation TF.460-6"/>
+      </reference>
+    </references>
+    <references title="Informative References">
+      <?rfc include='reference.I-D.draft-ietf-ntp-data-minimization-04.xml'?>
+      <?rfc include='reference.I-D.draft-ietf-ntp-bcp-13.xml'?>
+      <?rfc include='reference.ISO.8601.1988.xml'?>
+    </references>
+    <!--
+    <section title="Acknowledgements">
+    (None yet)
+    </section>
+    -->
+  </back>
+</rfc>
