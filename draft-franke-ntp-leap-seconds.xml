@@ -51,7 +51,7 @@
           based on &quot;the mean solar time of the prime meridian
           obtained from direct astronomical observation... corrected
           for the effects of small movements of the Earth relative to
-          the axis of rotation&quot;<xref target="ITU.T4.1996"/>. The
+          the axis of rotation&quot;<xref target="ITU.TF460-6.2002"/>. The
           most commonly-used atomic time scale is International Atomic
           Time (TAI). TAI is a physical realization of Terrestrial
           Time (TT), which is a theoretical ideal time scale based on
@@ -510,7 +510,7 @@
       <?rfc include='reference.RFC.7822.xml'?>
       <?rfc include='reference.RFC.8174.xml'?>
       <?rfc include='reference.I-D.draft-ietf-ntp-using-nts-for-ntp-17.xml'?>
-      <reference anchor="ITU.T4.1996">
+      <reference anchor="ITU.TF460-6.2002">
         <front>
           <title>
             Standard-frequency and time-signal emissions 
@@ -518,7 +518,7 @@
           <author>
             <organization>International Telecommunications Union</organization>
           </author>
-          <date month="" year="1996"/>
+          <date month="" year="2002"/>
         </front>
         <seriesInfo name="ITU-R" value="Recommendation TF.460-6"/>
       </reference>
