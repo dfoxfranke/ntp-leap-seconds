@@ -321,34 +321,6 @@
         </list>
       </t>
       <t>
-        Values for the Extended Leap Indicator SHALL be constructed
-        and interpreted as follows:
-        <list>
-          <t>00: No leap second will be inserted or deleted at the end
-          of the current six-month period.</t>
-          <t>01: A leap second will be inserted at the end of the
-          current six-month period.</t>
-          <t>10: A second will be deleted at the end of the current
-          six-month period.</t>
-          <t>11: No data is yet available as to whether a leap second
-          will be inserted or deleted at the end of the current
-          six-month period.</t>
-        </list>
-        The current six-month period is the period which contains the
-        Receive Timestamp and runs either from January 1 to June 30 or
-        from July 1 to December 31 of the same Gregorian calendar year.
-      </t>
-      <t>
-        The semantics of the Extended Leap Indicator roughly mirror
-        those of the Leap Indicator header field. In contrast,
-        however, leap warnings MAY be provided up to six months
-        advance, as soon as the relevant bulletin becomes available
-        from the IERS. Furthermore, a value of 11 merely indicates
-        that no bulletin is available yet; it does not indicate, as
-        the header's Leap Indicator field does, that the sender's
-        clock is unsynchronized.
-      </t>
-      <t>
         The Leap Data and Era Number extension field MAY be included
         in symmetric, client, server, or broadcast mode, but, to
         prevent amplification, servers MUST NOT include it in their
@@ -363,6 +335,40 @@
         extension field SHOULD be encrypted and MUST be authenticated,
         and if the client encrypted the field in its request then the
         server MUST encrypt it in its response.
+      </t>
+      <t>
+        Except in client-mode packets, values for the Extended Leap
+        Indicator (ELI) SHALL be constructed and interpreted as
+        follows:
+        <list>
+          <t>00: No leap second will be inserted or deleted at the end
+          of the current month.</t>
+          <t>01: A leap second will be inserted at the end of the
+          current month.</t>
+          <t>10: A second will be deleted at the end of the current
+          month.</t>
+          <t>11: No data is yet available as to whether a leap second
+          will be inserted or deleted at the end of the current month.</t>
+        </list>
+      </t>
+      <t>
+        The current month is the Gregorian calendar month determined by
+        the Receive Timestamp.
+      </t>
+      <t>
+        Except in client-mode packets, senders SHOULD set the ELI to
+        00, 01, or 10 at the beginning of the month or as soon as they
+        have the relevant data available, whichever is
+        later. Otherwise, a 01 or a 10 in the ELI has the same
+        semantics as the corresponding value in the Leap Indicator
+        (LI) header field. The semantics of 11 differ more strongly:
+        while a 11 in the LI indicates that the sender's clock is not
+        synchronized, a 11 in the ELI indicates only that the IERS has
+        not yet published a bulletin for the current month or that the
+        sender has not yet learned of its existence. Consequently, the
+        semantics of 00 also differ: a 00 in the ELI is an affirmative
+        statement that no leap second is coming, while a 00 in the LI
+        might indicate lack of data.
       </t>
       <t>
         The Era Number subfield gives the era number of the Receive
