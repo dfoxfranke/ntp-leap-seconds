@@ -43,68 +43,77 @@
           upon observation of the rotation of the Earth relative to some
           celestial reference point such as the Sun or distant background
           stars. An atomic time scale is based upon measurement of a quantum
-          phenomenon that are understood to be cleanly periodic with respect
+          phenomenon that is understood to be cleanly periodic with respect
           to theoretical physics' idealized notion of proper time.
         </t>
         <t>
           The most commonly-used universal time scale is UT1, which is
           based on &quot;the mean solar time of the prime meridian
-          obtained from direct astronomical observation... corrected for
-          the effects of small movements of the Earth relative to the
-          axis of rotation&quot;<xref target="ITU.T4.1996"/>. The most
-          commonly-used atomic time scale is Temps Atomique
-          International (International Atomic Time, or TAI), which is
-          based upon the SI second. The SI second is presently defined
-          as &quot;the duration of 9,192,631,770 periods of the
-          radiation corresponding to the transition between the two
-          hyperfine levels of the ground state of the caesium-133
-          atom&quot;, but may in the future be redefined as time
-          metrologists gain the ability to measure other quantum
-          phenomena to ever-greater precision.
+          obtained from direct astronomical observation... corrected
+          for the effects of small movements of the Earth relative to
+          the axis of rotation&quot;<xref target="ITU.T4.1996"/>. The
+          most commonly-used atomic time scale is International Atomic
+          Time (TAI). TAI is a physical realization of Terrestrial
+          Time (TT), which is a theoretical ideal time scale based on
+          the SI second. The SI second is presently defined as
+          &quot;the duration of 9,192,631,770 periods of the radiation
+          corresponding to the transition between the two hyperfine
+          levels of the ground state of the caesium-133 atom&quot;,
+          but may in the future be redefined as time metrologists gain
+          the ability to measure other quantum phenomena to
+          ever-greater precision. TAI is computed from a weighted
+          average of the time kept by a worldwide network of reference
+          clocks, maintained under the supervision of the
+          International Bueuau of Weight and Measures (BIPM), which
+          seek to measure TT as closely as possible. These clocks are
+          authoritative: whatever they report is TAI, by definition.
         </t>
         <t>
           Civil timekeeping is based upon UTC, which is a compromise
-          between UT1 and TAI and is neither purely universal nor purely
-          atomic. Seconds in UTC are SI seconds, but days are not always
-          86,400 seconds long: from time to time a &quot;leap&quot;
-          second is inserted or deleted at the end of a day, always
-          either June 30 or December 31. The decision to insert or
-          delete a leap second is made by the International Earth
-          Rotation and Reference Systems Service (IERS), with the aim of
-          ensuring that UTC and UT1 never differ by more than 900
-          milliseconds.  At their inception in 1972, UTC and TAI were
-          equal. Since then, through the start of 2019, 37 leap seconds
-          have been inserted and none have been deleted, placing TAI 37
-          seconds ahead of UTC. Except while a leap second is in
-          progress, TAI and UTC always differ by an integral number of
-          seconds.
+          between UT1 and TAI and is neither purely universal nor
+          purely atomic. Seconds in UTC are SI seconds, but days are
+          not always 86,400 seconds long: from time to time a
+          &quot;leap&quot; second is inserted or deleted at the end of
+          a month, generally but not necessarily either June or
+          December. The decision to insert or delete a leap second is
+          made by the International Earth Rotation and Reference
+          Systems Service (IERS), with the aim of ensuring that UTC
+          and UT1 never differ by more than 900 milliseconds.  At the
+          inception of leap seconds in 1972, TAI was 10 seconds ahead
+          of UTC. Since then, through the start of 2019, 27 leap
+          seconds have been inserted and none have been deleted,
+          placing TAI 37 seconds ahead. Except while a leap second is
+          in progress, TAI and UTC always differ by an integral number
+          of seconds.
         </t>
         <t>
-          Both TAI and UTC are canonically represented by a count of
-          days, hours, minutes, and seconds (including fractional
-          seconds) since their epoch at solar midnight at the prime
-          meridian on January 1, 1958. While neither TAI nor UTC is
-          formally defined for any date earlier than the epoch, this nit
-          is routinely ignored by allowing the day number to be negative
-          and by assuming the fiction that prior to 1958 Earth's
-          rotation was always perfectly regular with respect to proper
-          time.
+          UTC is not well-defined prior to 1972, and TAI is not-well
+          defined prior to the existence of the reference clocks which
+          measure it. However, this nit can be ignored by assuming the
+          fiction that TAI has always existed, but that prior to 1972
+          it measured mean solar seconds rather than SI seconds, so that
+          until 1972 the TAI-UTC offset was always 10 seconds.
         </t>
         <t>
-          Since one day of TAI always contains 24 hours, one hour always
-          contains 60 minutes, and one minute always contains 60
-          seconds, one can safely dispense with this structure and,
-          without any loss of information, equivalently represent TAI
-          just as a real number of seconds since the epoch. Similarly,
-          any alternative date can safely be chosen as an epoch so long
-          as it is fixed and known.
+          TAI, UT1, and UTC all are canonically represented by a
+          calendar date plus hours, minutes, and seconds (including
+          fractional seconds) since midnight. Since one day of TAI
+          always contains 24 hours, one hour always contains 60
+          minutes, and one minute always contains 60 seconds, one can
+          safely dispense with this structure and, without any loss of
+          information, equivalently represent TAI just as a real
+          number of SI seconds since some fixed epoch. Similarly, UT1
+          can be represented by a real number of mean solar seconds
+          since a fixed epoch.
         </t>
         <t>
-          UTC, however, cannot be simplified to the same extent. While
-          the hours, minutes, and seconds can safely be consolidated
-          into &quot;seconds since midnight&quot;, since not all days
-          are of equal length, day number must be tracked separately
-          from time of day.
+          UTC, however, cannot be simplified to quite the same
+          extent. Hours, minutes, and seconds can safely be
+          consolidated into &quot;seconds since midnight&quot;, and
+          the date can be simplified to a count of days since a fixed
+          epoch date. However, since days contain a variable and
+          unpredictable number of seconds, day number must be tracked
+          separately from time of day.
         </t>
         <t>
           Text-based timestamp formats such as <xref target="ISO.8601.1988">ISO 8601</xref>
