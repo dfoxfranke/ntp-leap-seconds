@@ -300,7 +300,7 @@
           <t>X: When set, indicates that the Transmit Timestamp was
           captured during a leap second</t>
           <t>r: This bit is unused and reserved. Senders MUST set it
-          to 0. Receivers MUST igonre it.</t>
+          to 0. Receivers MUST ignore it.</t>
           <t>Era Number: The era, as defined in <xref
           target="RFC5905"/>, during which the Receive Timestamp was
           captured, given as an unsigned 24-bit integer in network
