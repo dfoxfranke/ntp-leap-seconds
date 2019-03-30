@@ -528,10 +528,12 @@
       <?rfc include='reference.I-D.draft-ietf-ntp-bcp-13.xml'?>
       <?rfc include='reference.ISO.8601.1988.xml'?>
     </references>
-    <!--
     <section title="Acknowledgements">
-    (None yet)
+      <t>
+        The author gratefully acknowledges Tony Finch for suggesting the PLI
+        field, and Steve Allen for corrections regarding the early history
+        of TAI and UTC.
+      </t>
     </section>
-    -->
   </back>
 </rfc>
