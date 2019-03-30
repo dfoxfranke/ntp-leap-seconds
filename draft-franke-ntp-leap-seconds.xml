@@ -275,7 +275,7 @@
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |          Field Type           |            Length             |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|ELI|F|R|X| res |                   Era Number                  | 
+|ELI|PLI|F|R|X|r|                   Era Number                  | 
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                         TAI-UTC Offset                        |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -292,14 +292,15 @@
           <t>Length: The length of the extension field as specified by
           <xref target="RFC7822"/>.</t>
           <t>ELI: The Extended Leap Indicator, as specified below.</t>
+          <t>PLI: The Previous Leap Indicator, as specified below.</t>
           <t>F: When set, indicates that the Reference Timestamp was
           captured during a leap second.</t>
           <t>R: When set, indicates that the Receive Timestamp was
           captured during a leap second.</t>
           <t>X: When set, indicates that the Transmit Timestamp was
           captured during a leap second</t>
-          <t>res: These three bits are unused and reserved. Senders
-          MUST set them to 0. Receivers MUST igonre them.</t>
+          <t>r: This bit is unused and reserved. Senders MUST set it
+          to 0. Receivers MUST igonre it.</t>
           <t>Era Number: The era, as defined in <xref
           target="RFC5905"/>, during which the Receive Timestamp was
           captured, given as an unsigned 24-bit integer in network
@@ -345,7 +346,7 @@
           of the current month.</t>
           <t>01: A leap second will be inserted at the end of the
           current month.</t>
-          <t>10: A second will be deleted at the end of the current
+          <t>10: A leap second will be deleted at the end of the current
           month.</t>
           <t>11: No data is yet available as to whether a leap second
           will be inserted or deleted at the end of the current month.</t>
@@ -369,6 +370,31 @@
         semantics of 00 also differ: a 00 in the ELI is an affirmative
         statement that no leap second is coming, while a 00 in the LI
         might indicate lack of data.
+      </t>
+      <t>
+        The Previous Leap Indicator (PLI) is analogous to the ELI,
+        but pertains to the previous month rather than current one.
+        Except in client-mode packets, its value SHALL be constructed
+        and interpreted as follows:
+        <list>
+          <t>00: No leap second was inserted or deleted at the end
+          of the previous month.</t>
+          <t>01: A leap second was inserted at the end of the
+          previous month.</t>
+          <t>10: A leap second was deleted at the end of the previous
+          month.</t>
+          <t>11: No data is available as to whether a leap second
+          was inserted or deleted at the end of the previous month.</t>
+        </list>
+      </t>
+      <t>
+        The previous month is the Gregorian calendar month previous to the
+        one determined by the Receive Timestamp.
+      </t>
+      <t>
+        The information provided in the PLI is useful to receivers which
+        wish to translate the UTC time given by NTP to a smeared time scale
+        for use by other applications.
       </t>
       <t>
         The Era Number subfield gives the era number of the Receive
