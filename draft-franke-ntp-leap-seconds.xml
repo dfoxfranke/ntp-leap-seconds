@@ -470,6 +470,90 @@
         dropped by the network.
       </t>
     </section>
+    <section title="Examples">
+      <section title="Inserting a leap second">
+        <t>
+          At the end of 2016 a leap second was inserted. The following
+          sequence was seen at that time:
+        </t>
+        <figure anchor="insert-leap-second" title="Insert of leap second at the end of 2016">
+          <artwork><![CDATA[
++----------------------+------------+---------+
+|          UTC         |     NTP    | TAI-UTC |
++----------------------+------------+---------+
+| 2016-12-31T23:59:59Z | 3692217599 | 36      |
+| 2016-12-31T23:59:60Z | 3692217599 | 36      |
+| 2017-01-01T00:00:00Z | 3692217600 | 37      |
++----------------------+------------+---------+]]>
+          </artwork>
+        </figure>
+        <t>
+          A request received and transmit sent at 2016-12-31T23:59:59Z
+          would contain:
+          <list>
+            <t>ELI: 01</t>
+            <t>PLI: 00</t>
+            <t>R: 0</t>
+            <t>X: 0</t>
+            <t>TAI-UTC Offset: 36</t>
+            <t>Receive time: 3692217599</t>
+            <t>Transmit time: 3692217599</t>
+          </list>
+	</t>
+	<t>
+          A request received at 2016-12-31T23:59:59Z and transmit sent at
+          2016-12-31T23:59:60Z would contain:
+          <list>
+            <t>ELI: 01</t>
+            <t>PLI: 00</t>
+            <t>R: 0</t>
+            <t>X: 1</t>
+            <t>TAI-UTC Offset: 36</t>
+            <t>Receive time: 3692217599</t>
+            <t>Transmit time: 3692217599</t>
+          </list>
+        </t>
+	<t>
+          A request received and transmit sent at 2016-12-31T23:59:60Z
+          would contain:
+          <list>
+            <t>ELI: 01</t>
+            <t>PLI: 00</t>
+            <t>R: 1</t>
+            <t>X: 1</t>
+            <t>TAI-UTC Offset: 36</t>
+            <t>Receive time: 3692217599</t>
+            <t>Transmit time: 3692217599</t>
+          </list>
+        </t>
+	<t>
+          A request received at 2016-12-31T23:59:60Z and transmit sent at
+          <list>
+            <t>2017-01-01T00:00:00Z would contain:</t>
+            <t>ELI: 01</t>
+            <t>PLI: 00</t>
+            <t>R: 1</t>
+            <t>X: 0</t>
+            <t>TAI-UTC Offset: 36</t>
+            <t>Receive time: 3692217599</t>
+            <t>Transmit time: 3692217600</t>
+          </list>
+        </t>
+	<t>
+          A request received and transmit sent at 2017-01-01T00:00:00Z
+          would contain:
+          <list>
+            <t>ELI: 11</t>
+            <t>PLI: 01</t>
+            <t>R: 0</t>
+            <t>X: 0</t>
+            <t>TAI-UTC Offset: 37</t>
+            <t>Receive time: 3692217600</t>
+            <t>Transmit time: 3692217600</t>
+          </list>
+        </t>
+      </section>
+    </section>
     <section title="Security Considerations">
       <t>
         All extensions to NTP must take care that they do not enable
